@@ -10,8 +10,9 @@ int main(int argc, char const *argv[])
 	ifstream fin ("Datasets/sum_function_size_5_depth_2.txt");
 	Dataset d;
 	d.readDatasetFile(fin, 5, 2, true);
-	d.printDataset();
-	d.normalize();
-	d.printDataset();
+	// d.normalize();
+	LinearRegressor lr;
+	lr.train(&d, 0.02, 0.0001);
+	lr.printResults();
 	return 0;
 }

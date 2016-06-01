@@ -113,7 +113,7 @@ double Dataset::getInput(int sample_number, int feature_number) {
 }
 
 double Dataset::getOutput(int sample_number) {
-	return outputs_[sample_number];
+	return (is_normalized_) ? normalized_outputs_[sample_number] : outputs_[sample_number];
 }
 
 void Dataset::printDataset() {
