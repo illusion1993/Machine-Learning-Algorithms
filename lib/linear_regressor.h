@@ -38,7 +38,7 @@ class LinearRegressor {
 					parameters_[feature_number] -= (learning_rate * partial_derivative);
 				}
 			}
-			// cout << "RMS error is: " << rms_error << "\n";
+			cout << "RMS error is: " << rms_error << "\n";
 		}
 	}
 public:

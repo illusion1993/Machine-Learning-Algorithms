@@ -12,7 +12,7 @@ int main(int argc, char const *argv[])
 	d.readDatasetFile(fin, 5, 2, true);
 	// d.normalize();
 	LinearRegressor lr;
-	lr.train(&d, 0.02, 0.0001);
+	lr.train(&d, 0.01, 0.0001);
 	lr.printResults();
 	return 0;
 }
