@@ -3,20 +3,20 @@ using namespace std;
 
 class Dataset {
 	// Size of dataset is number of samples, depth is number of features
-	int size_, depth_;
+	int _size, _depth;
 	
 	// Inputs, outputs and their normalized versions for all samples in dataset
-	vector< vector<double> > inputs_, normalized_inputs_;
-	vector<double> outputs_, normalized_outputs_;
+	vector< vector<double> > _inputs, _normalized_inputs;
+	vector<double> _outputs, _normalized_outputs;
 	
 	// Maximum and minimum values of inputs/outputs in dataset. Used for normalization
-	vector<double> maximum_input_, minimum_input_;
-	double maximum_output_, minimum_output_;
+	vector<double> _maximum_input, _minimum_input;
+	double _maximum_output, _minimum_output;
 	
-	// has_outputs would be true for training dataset, false for a testing dataset
-	// is_inflated is true when vectors are inflated to required sizes
-	// is_populated is true when dataset has loaded values from file
-	bool has_outputs_, is_normalized_, is_inflated, is_populated_;
+	// _has_outputs would be true for training dataset, false for a testing dataset
+	// _is_inflated is true when vectors are inflated to required sizes
+	// _is_populated is true when dataset has loaded values from file
+	bool _has_outputs, _is_normalized, _is_inflated, _is_populated;
 	
 	void reset(int size = 0, int depth = 0, bool has_outputs = false);
 public:
@@ -42,115 +42,115 @@ Dataset::Dataset(int size, int depth, bool has_outputs) { reset(size, depth, has
 Dataset::Dataset(std::ifstream &fin, int size, int depth, bool has_outputs) { readDatasetFile(fin, size, depth, has_outputs); }
 
 void Dataset::reset(int size /*=0*/, int depth /*=0*/, bool has_outputs /*=false*/) {
-	size_ = size;
-	depth_ = depth;
-	has_outputs_ = has_outputs;
+	_size = size;
+	_depth = depth;
+	_has_outputs = has_outputs;
 	
-	inputs_.resize(size_, vector<double>(depth_));
-	if (has_outputs_) outputs_.resize(size_);
+	_inputs.resize(_size, vector<double>(_depth));
+	if (_has_outputs) _outputs.resize(_size);
 	
-	normalized_inputs_.clear();
-	normalized_outputs_.clear();
+	_normalized_inputs.clear();
+	_normalized_outputs.clear();
 
-	maximum_output_ = DBL_MIN;
-	minimum_output_ = DBL_MAX;
-	maximum_input_.resize(depth, DBL_MIN);
-	minimum_input_.resize(depth, DBL_MAX);
+	_maximum_output = DBL_MIN;
+	_minimum_output = DBL_MAX;
+	_maximum_input.resize(depth, DBL_MIN);
+	_minimum_input.resize(depth, DBL_MAX);
 
-	is_normalized_ = is_populated_ = false;
-	is_inflated = (size && depth);
+	_is_normalized = _is_populated = false;
+	_is_inflated = (size && depth);
 }
 
 void Dataset::readDatasetFile(std::ifstream &fin, int size, int depth, bool has_outputs) {
 	reset(size, depth, has_outputs);
-	for (int sample_number = 0; sample_number < size_; sample_number++) {
-		for (int feature_number = 0; feature_number < depth_; feature_number++) {
-			fin >> inputs_[sample_number][feature_number];
-			maximum_input_[feature_number] = max(maximum_input_[feature_number], inputs_[sample_number][feature_number]);
-			minimum_input_[feature_number] = min(minimum_input_[feature_number], inputs_[sample_number][feature_number]);
+	for (int sample_number = 0; sample_number < _size; sample_number++) {
+		for (int feature_number = 0; feature_number < _depth; feature_number++) {
+			fin >> _inputs[sample_number][feature_number];
+			_maximum_input[feature_number] = max(_maximum_input[feature_number], _inputs[sample_number][feature_number]);
+			_minimum_input[feature_number] = min(_minimum_input[feature_number], _inputs[sample_number][feature_number]);
 		}
-		if (has_outputs_) {
-			fin >> outputs_[sample_number];
-			maximum_output_ = max(maximum_output_, outputs_[sample_number]);
-			minimum_output_ = min(minimum_output_, outputs_[sample_number]);
+		if (_has_outputs) {
+			fin >> _outputs[sample_number];
+			_maximum_output = max(_maximum_output, _outputs[sample_number]);
+			_minimum_output = min(_minimum_output, _outputs[sample_number]);
 		}
 		// Adding bias input (1.0) to every sample
-		inputs_[sample_number].push_back(1.0);
+		_inputs[sample_number].push_back(1.0);
 	}
-	is_populated_ = true;
+	_is_populated = true;
 }
 
 void Dataset::normalize() {
 	// Checking 1. is not already normalized, 2. dataset is populated
 	// 3. has_outputs i.e. This is a training dataset. The testing dataset should not be normalized here.
-	if (!is_normalized_ && is_populated_ && has_outputs_) {
-		normalized_inputs_.resize(size_, vector<double>(depth_));
-		normalized_outputs_.resize(size_);
+	if (!_is_normalized && _is_populated && _has_outputs) {
+		_normalized_inputs.resize(_size, vector<double>(_depth));
+		_normalized_outputs.resize(_size);
 		// Min-Max feature scaling in action
-		for (int sample_number = 0; sample_number < size_; sample_number++) {
-			for (int feature_number = 0; feature_number < depth_; feature_number++) {
-				normalized_inputs_[sample_number][feature_number] = 
-					(maximum_input_[feature_number] - minimum_input_[feature_number] > 0.0) ? 
-						(inputs_[sample_number][feature_number] - minimum_input_[feature_number]) / (maximum_input_[feature_number] - minimum_input_[feature_number]) : 1;
+		for (int sample_number = 0; sample_number < _size; sample_number++) {
+			for (int feature_number = 0; feature_number < _depth; feature_number++) {
+				_normalized_inputs[sample_number][feature_number] = 
+					(_maximum_input[feature_number] - _minimum_input[feature_number] > 0.0) ? 
+						(_inputs[sample_number][feature_number] - _minimum_input[feature_number]) / (_maximum_input[feature_number] - _minimum_input[feature_number]) : 1;
 			}
-			normalized_outputs_[sample_number] = (maximum_output_ - minimum_output_ > 0.0) ? 
-				(outputs_[sample_number] - minimum_output_) / (maximum_output_ - minimum_output_) : 1;
+			_normalized_outputs[sample_number] = (_maximum_output - _minimum_output > 0.0) ? 
+				(_outputs[sample_number] - _minimum_output) / (_maximum_output - _minimum_output) : 1;
 			// Pushing bias input in the end
-			normalized_inputs_[sample_number].push_back(1.0);
+			_normalized_inputs[sample_number].push_back(1.0);
 		}
-		is_normalized_ = true;
+		_is_normalized = true;
 	}
 }
 
-int Dataset::size() { return size_; }
+int Dataset::size() { return _size; }
 
-int Dataset::depth() { return depth_; }
+int Dataset::depth() { return _depth; }
 
-bool Dataset::hasOutputs() { return has_outputs_; }
+bool Dataset::hasOutputs() { return _has_outputs; }
 
 double Dataset::getInput(int sample_number, int feature_number) {
-	return (is_normalized_) ? normalized_inputs_[sample_number][feature_number] : inputs_[sample_number][feature_number];
+	return (_is_normalized) ? _normalized_inputs[sample_number][feature_number] : _inputs[sample_number][feature_number];
 }
 
 double Dataset::getOutput(int sample_number) {
-	return (is_normalized_) ? normalized_outputs_[sample_number] : outputs_[sample_number];
+	return (_is_normalized) ? _normalized_outputs[sample_number] : _outputs[sample_number];
 }
 
 void Dataset::printDataset() {
 	// This is helpful for debugging purposes
-	cout << "\n\nDataset Description------------\nSize: " << size_ << "\n";
-	cout << "Depth: " << depth_ << "\n";
-	cout << "Inputs vector sizes: " << inputs_.size() << ", " << inputs_[0].size() << "\n";
-	cout << "Outputs vector size: " << outputs_.size() << "\n";
-	cout << "has_outputs: " << has_outputs_ << "\n";
-	cout << "is_normalized: " << is_normalized_ << "\n";
-	cout << "is_populated: " << is_populated_ << "\n\n";
-	if (is_inflated) {
+	cout << "\n\nDataset Description------------\nSize: " << _size << "\n";
+	cout << "Depth: " << _depth << "\n";
+	cout << "Inputs vector sizes: " << _inputs.size() << ", " << _inputs[0].size() << "\n";
+	cout << "Outputs vector size: " << _outputs.size() << "\n";
+	cout << "has_outputs: " << _has_outputs << "\n";
+	cout << "is_normalized: " << _is_normalized << "\n";
+	cout << "is_populated: " << _is_populated << "\n\n";
+	if (_is_inflated) {
 		cout << "Values in samples are: \n";
-		for (int sample_number = 0; sample_number < size_; sample_number++) {
-			for (int feature_number = 0; feature_number <= depth_; feature_number++) {
-				cout << inputs_[sample_number][feature_number] << "\t";
+		for (int sample_number = 0; sample_number < _size; sample_number++) {
+			for (int feature_number = 0; feature_number <= _depth; feature_number++) {
+				cout << _inputs[sample_number][feature_number] << "\t";
 			}
-			if (has_outputs_) cout << ": " << outputs_[sample_number] << "\n";
+			if (_has_outputs) cout << ": " << _outputs[sample_number] << "\n";
 		}
 	}
-	if (is_normalized_) {
+	if (_is_normalized) {
 		cout << "\nNormalized values: \n";
-		for (int sample_number = 0; sample_number < size_; sample_number++) {
-			for (int feature_number = 0; feature_number <= depth_; feature_number++) {
-				cout << normalized_inputs_[sample_number][feature_number] << "\t";
+		for (int sample_number = 0; sample_number < _size; sample_number++) {
+			for (int feature_number = 0; feature_number <= _depth; feature_number++) {
+				cout << _normalized_inputs[sample_number][feature_number] << "\t";
 			}
-			if (has_outputs_) cout << ": " << normalized_outputs_[sample_number] << "\n";
+			if (_has_outputs) cout << ": " << _normalized_outputs[sample_number] << "\n";
 		}
 	}
 	cout << "\nMaximum Inputs for each feature: ";
-	for (int feature_number = 0; feature_number < depth_; feature_number++) {
-		cout << maximum_input_[feature_number] << " ";
+	for (int feature_number = 0; feature_number < _depth; feature_number++) {
+		cout << _maximum_input[feature_number] << " ";
 	}
 	cout << "\nMinimum Inputs for each feature: ";
-	for (int feature_number = 0; feature_number < depth_; feature_number++) {
-		cout << minimum_input_[feature_number] << " ";
+	for (int feature_number = 0; feature_number < _depth; feature_number++) {
+		cout << _minimum_input[feature_number] << " ";
 	}
-	cout << "\nMaximum Output: " << maximum_output_ << "\n";
-	cout << "Minimum Output: " << minimum_output_ << "\n";
+	cout << "\nMaximum Output: " << _maximum_output << "\n";
+	cout << "Minimum Output: " << _minimum_output << "\n";
 }
